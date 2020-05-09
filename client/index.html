@@ -20,7 +20,7 @@
         started = false;
 
       function setup() {
-        socket = io.connect("https://pacman-socket.herokuapp.com/");
+        socket = io();
         socket.on("startMaze", function (data) {
           maze = new Maze(data);
           createCanvas(maze.width, maze.height);
