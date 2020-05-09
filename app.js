@@ -11,7 +11,7 @@ app.use("/client", express.static(__dirname + "/client"));
 
 serv.listen(PORT, () => console.log(`Server has started on port ${PORT}`));
 
-const Maze = require("./classes/Maze.js");
+const Maze = require("./server/classes/Maze.js");
 var maze = new Maze();
 var socketsCharacterList = [];
 
