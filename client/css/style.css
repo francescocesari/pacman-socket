@@ -1,6 +1,6 @@
 @font-face {
   font-family: Pacmanfont;
-  src: url(/client/fonts/pacmanfont.ttf);
+  src: url("/client/fonts/pacmanfont.ttf");
 }
 
 body {
