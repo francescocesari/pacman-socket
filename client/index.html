@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PacMan.js | Francesco Cesari</title>
+    <link rel="icon" href="/client/img/pacman.ico" type="image/icon-x" />
+    <link rel="stylesheet" href="/client/css/style.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.0.0/p5.min.js"></script>
+    <script src="/client/js/Character.js"></script>
+    <script src="/client/js/Maze.js"></script>
+    <script src="/client/js/PacMan.js"></script>
+    <script src="/client/js/Ghost.js"></script>
+    <script type="text/javascript">
+      var myCharacter,
+        characterToDraw = [],
+        maze,
+        socket,
+        started = false;
+
+      function setup() {
+        socket = io.connect("https://pacman-socket.herokuapp.com/");
+        socket.on("startMaze", function (data) {
+          maze = new Maze(data);
+          createCanvas(maze.width, maze.height);
+          noStroke();
+          background(0);
+          maze.showWalls();
+          maze.showPellets();
+        });
+
+        socket.on("characterName", function (data) {
+          if (data.characterName === "pacman") {
+            myCharacter = new PacMan(
+              13 * maze.tileWidth + maze.tileWidth / 2,
+              26 * maze.tileHeight,
+              maze.tileWidth + 5,
+              maze.tileHeight + 5,
+              maze,
+              socket
+            );
+          } else if (data.characterName === "blinky") {
+            myCharacter = new Ghost(
+              13 * maze.tileWidth,
+              17 * maze.tileHeight,
+              maze.tileWidth,
+              maze.tileHeight,
+              maze,
+              socket,
+              color(255, 0, 0)
+            );
+          } else if (data.characterName === "pinky") {
+            myCharacter = new Ghost(
+              14 * maze.tileWidth,
+              17 * maze.tileHeight,
+              maze.tileWidth,
+              maze.tileHeight,
+              maze,
+              socket,
+              color("magenta")
+            );
+          } else {
+            alert("Personaggio già selezionato");
+            return;
+          }
+          myCharacter.name = data.characterName;
+          myCharacter.key = data.key;
+          console.log("SELECTED: " + myCharacter.name);
+          myCharacter.draw();
+          myCharacter.update();
+        });
+
+        socket.on("start", function (data) {
+          started = data;
+        });
+
+        socket.on("position", function (data) {
+          characterToDraw[data.key] = data;
+          //console.log(characterToDraw[data.key]);
+          if (!started) drawCharacter(data);
+        });
+
+        socket.on("eat", function (data) {
+          maze.matrix[data.i][data.j] = -1;
+        });
+      }
+
+      function selectCharacter(characterName) {
+        socket.emit("characterName", characterName);
+      }
+
+      function drawCharacter(data) {
+        if (data.characterName === "pacman") {
+          var pacman = new PacMan(
+            data.x,
+            data.y,
+            maze.tileWidth + 5,
+            maze.tileHeight + 5,
+            maze,
+            socket
+          );
+          pacman.dir = data.dir;
+          pacman.draw();
+        } else if (data.characterName === "blinky") {
+          new Ghost(
+            data.x,
+            data.y,
+            maze.tileWidth,
+            maze.tileHeight,
+            maze,
+            socket,
+            color(255, 0, 0)
+          ).draw();
+        } else {
+          new Ghost(
+            data.x,
+            data.y,
+            maze.tileWidth,
+            maze.tileHeight,
+            maze,
+            socket,
+            color("magenta")
+          ).draw();
+        }
+      }
+
+      function draw() {
+        if (started) {
+          background(0);
+          maze.showWalls();
+          maze.showPellets();
+          if (keyCode === LEFT_ARROW) {
+            myCharacter.setDir(1);
+          } else if (keyCode === RIGHT_ARROW) {
+            myCharacter.setDir(3);
+          } else if (keyCode === UP_ARROW) {
+            myCharacter.setDir(2);
+          } else if (keyCode === DOWN_ARROW) {
+            myCharacter.setDir(4);
+          }
+          if (myCharacter.alive) {
+            myCharacter.move();
+            myCharacter.draw();
+            if (myCharacter.name === "pacman") {
+              myCharacter.eat();
+              //score += myCharacter.score;
+              //document.getElementById("score").innerHTML = "SCORE: " + score;
+            } else {
+              for (var i in characterToDraw) {
+                if (characterToDraw[i].characterName === "pacman") {
+                  myCharacter.catch(characterToDraw[i]);
+                }
+              }
+            }
+          }
+          for (i in characterToDraw) {
+            if (characterToDraw[i] != undefined) {
+              drawCharacter(characterToDraw[i]);
+            }
+          }
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <span class="title">
+      PAC MAN
+    </span>
+    <div id="canv_parent">
+      <!--<div id="lifes">
+        <img id="life-1" src="/client/img/life.png" />
+        <img id="life-2" src="/client/img/life.png" />
+        <img id="life-3" src="/client/img/life.png" />
+      </div>
+      <span id="score">
+        SCORE: 0
+      </span>
+      <span id="gameOver">GAME OVER</span>
+      <span id="win">VITTORIA!!!</span>
+      <button id="btn-start-game" type="button" onclick="userStart()">
+        Avvia
+      </button>
+      <button id="btn-toggle-mode" type="button" onclick="toggleMode()">
+        PRO
+      </button>-->
+      <button type="button" onclick="selectCharacter('pacman')">Pacman</button>
+      <button type="button" onclick="selectCharacter('blinky')">Blinky</button>
+      <button type="button" onclick="selectCharacter('pinky')">Pinky</button>
+    </div>
+  </body>
+</html>
