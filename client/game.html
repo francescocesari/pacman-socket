@@ -86,7 +86,8 @@
     socket.on("start", (serverMaze) => {
       console.log("started");
       document.querySelector(".panel").remove();
-      document.body.innerHTML += "<div id='canv_parent'></div>";
+      document.body.innerHTML +=
+        "<div id='canv_parent'><span class='title'>PAC MAN</span><hr></div>";
       start = true;
       maze = new Maze(serverMaze);
       createCanvas(maze.width, maze.height).parent("canv_parent");
