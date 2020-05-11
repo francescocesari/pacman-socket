@@ -1,53 +1,6 @@
 class PacMan extends Character {
-  constructor(x, y, width, height, maze, socket) {
-    super(x, y, width, height, maze, socket);
-    this.upperMouthRadian = 1.85; // upper mouth radian
-    this.lowerMouthRadian = 0.2; // lower mouth radian
-    this.openingClosingMouthSpeed = 0.022; // speed of mouth opening & closing
-    this.score = 0;
-    keyCode = null;
-  }
-
-  draw() {
-    fill(255, 255, 0);
-    ellipse(
-      this.x + this.width / 2 - 2.5,
-      this.y + this.height / 2 - 2.5,
-      this.width,
-      this.height
-    );
-    fill(0);
-    if (this.upperMouthRadian >= 2 || this.upperMouthRadian <= 1.8) {
-      this.openingClosingMouthSpeed = this.openingClosingMouthSpeed * -1;
-    }
-    let angle;
-    switch (this.dir) {
-      case 1:
-        angle = 177;
-        break;
-      case 2:
-        angle = 267;
-        break;
-      case 3:
-        angle = -3;
-        break;
-      case 4:
-        angle = 87;
-        break;
-      default:
-        angle = 177;
-        break;
-    }
-    arc(
-      this.x + this.width / 2 - 2.5,
-      this.y + this.height / 2 - 2.5,
-      this.width,
-      this.height,
-      (this.upperMouthRadian += this.openingClosingMouthSpeed) * PI +
-        radians(angle),
-      (this.lowerMouthRadian -= this.openingClosingMouthSpeed) * PI +
-        radians(angle)
-    );
+  constructor(x, y, width, height, maze) {
+    super(x, y, width, height, maze);
   }
 
   eat() {
@@ -63,16 +16,5 @@ class PacMan extends Character {
         }
       }
     }
-  }
-
-  deathAnimation() {
-    fill(255, 255, 0);
-    ellipse(
-      this.x + this.width / 2 - 2.5,
-      this.y + this.height / 2 - 2.5,
-      this.width,
-      this.height
-    );
-    fill(0);
   }
 }

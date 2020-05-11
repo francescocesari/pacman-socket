@@ -114,6 +114,12 @@ canvas {
   margin-top: 10px;
 }
 
+#canv_parent {
+  width: fit-content;
+  position: relative;
+  margin: 0 auto;
+}
+
 *,
 ::before,
 ::after {

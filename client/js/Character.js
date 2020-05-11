@@ -1,5 +1,5 @@
 class Character {
-  constructor(x, y, width, height, maze, socket) {
+  constructor(x, y, width, height, maze) {
     this.width = width;
     this.height = height;
     this.x = x;
@@ -12,7 +12,6 @@ class Character {
     this.state = "STOP";
     this.speed = 1.875;
     this.prevState;
-    this.socket = socket;
     this.alive = true;
   }
 
@@ -24,12 +23,6 @@ class Character {
     this.nextDir = dir;
   }
 
-  showTile() {
-    fill(255, 0, 0);
-    stroke(76);
-    rect(this.x, this.y, this.width, this.height);
-  }
-
   move() {
     this.prevState = this.state;
     this.state = "MOVE";
@@ -37,7 +30,6 @@ class Character {
     if (tile !== undefined) {
       if (this.dir === this.nextDir) {
         this.stop();
-        console.log(tile);
       } else {
         if (this.prevState === "STOP") {
           this.stop();
@@ -54,16 +46,16 @@ class Character {
 
     if (this.state === "MOVE") {
       switch (this.dir) {
-        case 1:
+        case "LEFT":
           this.x -= this.speed;
           break;
-        case 2:
+        case "UP":
           this.y -= this.speed;
           break;
-        case 3:
+        case "RIGHT":
           this.x += this.speed;
           break;
-        case 4:
+        case "DOWN":
           this.y += this.speed;
           break;
       }
@@ -83,7 +75,7 @@ class Character {
       x: this.x,
       y: this.y,
       dir: this.dir,
-      id: this.socket.id,
+      id: this.id,
     });
   }
 
@@ -101,7 +93,7 @@ class Character {
             tile.value !== -1 &&
             tile.value !== -2);
         switch (dir) {
-          case 1:
+          case "LEFT":
             x -= this.maze.tileWidth;
             if (mainCondition) {
               collision =
@@ -113,7 +105,7 @@ class Character {
                 x === tile.x && y > tile.y - this.maze.tileHeight && y < tile.y;
             }
             break;
-          case 2:
+          case "UP":
             y -= this.maze.tileHeight;
             if (mainCondition) {
               collision =
@@ -123,7 +115,7 @@ class Character {
                 tile.y === y && x > tile.x - this.maze.tileWidth && x < tile.x;
             }
             break;
-          case 3:
+          case "RIGHT":
             x += this.maze.tileWidth;
             if (mainCondition) {
               collision =
@@ -135,7 +127,7 @@ class Character {
                 x === tile.x && y > tile.y - this.maze.tileHeight && y < tile.y;
             }
             break;
-          case 4:
+          case "DOWN":
             y += this.maze.tileHeight;
             if (mainCondition) {
               collision =
@@ -149,5 +141,10 @@ class Character {
         if (collision) return tile;
       }
     }
+  }
+
+  draw() {
+    this.ctx.fillStyle = this.color || "#fff000";
+    this.ctx.fillRect(this.x, this.y, this.width, this.height);
   }
 }

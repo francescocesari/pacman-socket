@@ -7,7 +7,6 @@
     <link rel="icon" href="/client/img/pacman.ico" type="image/icon-x" />
     <link rel="stylesheet" href="/client/css/style.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.0.0/p5.min.js"></script>
     <script src="/client/js/Character.js"></script>
     <script src="/client/js/Maze.js"></script>
     <script src="/client/js/PacMan.js"></script>
@@ -22,16 +21,22 @@
         <hr />
         <div class="select-character-content">
           <div class="character-content">
-            <img src="/client/img/pacman_left.gif" />
-            <button type="button" id="select-pacman">PACMAN</button>
+            <img src="/client/img/pacman.gif" />
+            <button type="button" onclick="selectCharacter('pacman')">
+              PACMAN
+            </button>
           </div>
           <div class="character-content">
             <img src="/client//img/blinky.gif" />
-            <button type="button" id="select-blinky">BLINKY</button>
+            <button type="button" onclick="selectCharacter('blinky')">
+              BLINKY
+            </button>
           </div>
           <div class="character-content">
             <img src="/client/img/pinky.gif" />
-            <button type="button" id="select-pinky">PINKY</button>
+            <button type="button" onclick="selectCharacter('pinky')">
+              PINKY
+            </button>
           </div>
         </div>
         <div class="wait-content">
@@ -43,36 +48,14 @@
   </body>
   <script type="text/javascript">
     var myCharacter;
-    var myCharcterName;
+    var myCharacterName;
     var userCharacters = [];
     var maze;
-    var start = false;
     const socket = io("/game");
     var url = new URL(document.location.href);
     const name = url.searchParams.get("name");
     const room = url.searchParams.get("room");
-
-    document
-      .getElementById("select-pacman")
-      .addEventListener("click", () => selectCharacter("pacman"));
-
-    document
-      .getElementById("select-blinky")
-      .addEventListener("click", () => selectCharacter("blinky"));
-
-    document
-      .getElementById("select-pinky")
-      .addEventListener("click", () => selectCharacter("pinky"));
-
-    function selectCharacter(character) {
-      socket.emit("character", character, (error) => {
-        if (error !== undefined) alert(error);
-        else {
-          document.querySelector(".wait-content").style.display = "block";
-          myCharcterName = character;
-        }
-      });
-    }
+    var pacman_img, blinky_img, pinky_img;
 
     socket.emit("join", { name, room }, (error) => {
       alert(error);
@@ -84,47 +67,14 @@
     });
 
     socket.on("start", (serverMaze) => {
-      console.log("started");
-      document.querySelector(".panel").remove();
-      document.body.innerHTML +=
-        "<div id='canv_parent'><span class='title'>PAC MAN</span><hr></div>";
-      start = true;
       maze = new Maze(serverMaze);
-      createCanvas(maze.width, maze.height).parent("canv_parent");
-      noStroke();
-      background("#201e00");
-      maze.showWalls();
-      maze.showPellets();
-      var name = myCharcterName;
-      if (name === "pacman") {
-        myCharacter = new PacMan(
-          13 * maze.tileWidth + maze.tileWidth / 2,
-          26 * maze.tileHeight,
-          maze.tileWidth + 5,
-          maze.tileHeight + 5,
-          maze,
-          socket
-        );
-      } else if (name === "blinky") {
-        myCharacter = new Ghost(
-          13 * maze.tileWidth,
-          17 * maze.tileHeight,
-          maze.tileWidth,
-          maze.tileHeight,
-          maze,
-          socket
-        );
-      } else if (name === "pinky") {
-        myCharacter = new Ghost(
-          14 * maze.tileWidth,
-          17 * maze.tileHeight,
-          maze.tileWidth,
-          maze.tileHeight,
-          maze,
-          socket
-        );
-      }
-      myCharacter.name = name;
+      var canvas = createCanvas();
+      maze.ctx = canvas.getContext("2d");
+      maze.show();
+      var name = myCharacterName;
+      var { x, y } = getStartingCoordinates(name);
+      character = { x, y, name };
+      myCharacter = getCharacter(character);
       myCharacter.draw();
       myCharacter.update();
     });
@@ -133,84 +83,101 @@
       maze.matrix[data.i][data.j].value = -1;
     });
 
-    function drawCharacter(character) {
-      if (character.name === "pacman") {
-        var pacman = new PacMan(
-          character.x,
-          character.y,
-          maze.tileWidth + 5,
-          maze.tileHeight + 5,
-          maze,
-          socket
-        );
-        pacman.dir = character.dir;
-        pacman.draw();
-      } else if (character.name === "blinky") {
-        var ghost = new Ghost(
-          character.x,
-          character.y,
-          maze.tileWidth,
-          maze.tileHeight,
-          maze,
-          socket
-        );
-        ghost.name = "blinky";
-        ghost.draw();
-      } else {
-        var ghost = new Ghost(
-          character.x,
-          character.y,
-          maze.tileWidth,
-          maze.tileHeight,
-          maze,
-          socket
-        );
-        ghost.name = "pinky";
-        ghost.draw();
-      }
-    }
-
     socket.on("position", (data) => {
       userCharacters[data.id] = data;
     });
 
-    function draw() {
-      if (start) {
-        noStroke();
-        background("#201e00");
-        maze.showWalls();
-        maze.showPellets();
-        if (keyCode === LEFT_ARROW) {
-          myCharacter.setDir(1);
-        } else if (keyCode === RIGHT_ARROW) {
-          myCharacter.setDir(3);
-        } else if (keyCode === UP_ARROW) {
-          myCharacter.setDir(2);
-        } else if (keyCode === DOWN_ARROW) {
-          myCharacter.setDir(4);
+    const getCharacter = (character) => {
+      var x = character.x;
+      var y = character.y;
+      var width = maze.tileWidth;
+      var height = maze.tileHeight;
+      if (character.name === "pacman") {
+        var pacman = new PacMan(x, y, width, height, maze);
+        pacman.dir = character.dir;
+        pacman.name = "pacman";
+        pacman.id = socket.id;
+        pacman.ctx = pacman.maze.ctx;
+        return pacman;
+      } else if (character.name === "blinky") {
+        var ghost = new Ghost(x, y, width, height, maze);
+        ghost.dir = character.dir;
+        ghost.color = "#fd0000";
+        ghost.name = "blinky";
+        ghost.id = socket.id;
+        ghost.ctx = ghost.maze.ctx;
+        return ghost;
+      } else {
+        var ghost = new Ghost(x, y, width, height, maze);
+        ghost.dir = character.dir;
+        ghost.color = "#ff08fa";
+        ghost.name = "pinky";
+        ghost.id = socket.id;
+        ghost.ctx = ghost.maze.ctx;
+        return ghost;
+      }
+    };
+
+    const getStartingCoordinates = (name) => {
+      var x, y;
+      if (name === "pacman") {
+        x = 13 * maze.tileWidth + maze.tileWidth / 2;
+        y = 26 * maze.tileHeight;
+      } else if (name === "blinky") {
+        x = 13 * maze.tileWidth;
+        y = 17 * maze.tileHeight;
+      } else {
+        x = 14 * maze.tileWidth;
+        y = 17 * maze.tileHeight;
+      }
+      return { x, y };
+    };
+
+    const selectCharacter = (character) => {
+      socket.emit("character", character, (error) => {
+        if (error !== undefined) alert(error);
+        else {
+          document.querySelector(".wait-content").style.display = "block";
+          myCharacterName = character;
         }
+      });
+    };
+
+    const createCanvas = () => {
+      document.querySelector(".panel-content").innerHTML = `
+        <div class="panel-content">
+          <span class='title'>PAC MAN</span>
+          <hr>
+          <div id='canv_parent'>
+            <canvas id="game-canvas" width="${maze.width}" height="${maze.height}">
+            </canvas>
+          </div>
+        </div>`;
+      return (canvas = document.getElementById("game-canvas"));
+    };
+
+    document.addEventListener("keydown", (e) => {
+      e = e || window.event;
+      if (e.keyCode == "38") {
+        myCharacter.setDir("UP");
+      } else if (e.keyCode == "40") {
+        myCharacter.setDir("DOWN");
+      } else if (e.keyCode == "37") {
+        myCharacter.setDir("LEFT");
+      } else if (e.keyCode == "39") {
+        myCharacter.setDir("RIGHT");
+      }
+    });
+
+    const start = setInterval(() => {
+      if (myCharacter != undefined) {
+        maze.show();
         myCharacter.move();
         myCharacter.draw();
-        for (i in userCharacters) {
-          if (userCharacters[i] != undefined) {
-            drawCharacter(userCharacters[i]);
-          }
+        for (var i in userCharacters) {
+          getCharacter(userCharacters[i]).draw();
         }
-        if (myCharacter.name === "pacman") {
-          myCharacter.eat();
-          //score += myCharacter.score;
-          //document.getElementById("score").innerHTML = "SCORE: " + score;
-        } /*else {
-                  for (var i in characterToDraw) {
-                    if (characterToDraw[i].characterName === "pacman") {
-                      myCharacter.catch(characterToDraw[i]);
-                    }
-                  }
-                }
-              }
-
-            }*/
       }
-    }
+    }, 20);
   </script>
 </html>

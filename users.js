@@ -1,6 +1,6 @@
 var users = [];
 
-var addUser = ({ id, name, room }) => {
+const addUser = ({ id, name, room }) => {
   var name = name.trim().toLowerCase();
   var room = room.trim().toLowerCase();
 
@@ -19,7 +19,7 @@ var addUser = ({ id, name, room }) => {
   return { user };
 };
 
-var removeUser = (id) => {
+const removeUser = (id) => {
   var index = users.findIndex((user) => user.id === id);
 
   if (index !== -1) {
@@ -27,11 +27,11 @@ var removeUser = (id) => {
   }
 };
 
-var getUser = (id) => users.find((user) => user.id === id);
+const getUser = (id) => users.find((user) => user.id === id);
 
-var getUsersInRoom = (room) => users.filter((user) => user.room === room);
+const getUsersInRoom = (room) => users.filter((user) => user.room === room);
 
-var setUserCharacter = ({ id, character }) => {
+const setUserCharacter = ({ id, character }) => {
   for (var i in users) {
     if (users[i].id === id) {
       users[i].character = character;
