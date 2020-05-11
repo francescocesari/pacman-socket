@@ -20,7 +20,7 @@ class Character {
   }
 
   setDir(dir) {
-    this.nextDir = dir;
+    if (this.state !== "ONRESTART") this.nextDir = dir;
   }
 
   move() {
@@ -75,7 +75,7 @@ class Character {
       x: this.x,
       y: this.y,
       dir: this.dir,
-      id: this.id,
+      id: this.socket.id,
     });
   }
 

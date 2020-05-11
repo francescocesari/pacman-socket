@@ -10,7 +10,7 @@ class Ghost extends Character {
       pacMan.y >= this.y - 14 &&
       pacMan.y <= this.y + 14
     ) {
-      this.socket.emit("pacDeath", true);
+      this.socket.emit("pacDeath", { id: this.socket.id });
     }
   }
 }

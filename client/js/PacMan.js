@@ -11,7 +11,7 @@ class PacMan extends Character {
         let y = this.y;
         if (tile.x === x && tile.y === y && tile.value === 0) {
           this.maze.matrix[i][j].value = -1;
-          this.socket.emit("eat", { i: i, j: j });
+          this.socket.emit("eat", { id: this.socket.id, i, j });
           return true;
         }
       }

@@ -72,19 +72,20 @@
       maze.ctx = canvas.getContext("2d");
       maze.show();
       var name = myCharacterName;
-      var { x, y } = getStartingCoordinates(name);
-      character = { x, y, name };
-      myCharacter = getCharacter(character);
-      myCharacter.draw();
+      myCharacter = getStartingCharacter(name);
       myCharacter.update();
     });
 
-    socket.on("eat", (data) => {
-      maze.matrix[data.i][data.j].value = -1;
+    socket.on("eat", ({ id, i, j }) => {
+      maze.matrix[i][j].value = -1;
     });
 
     socket.on("position", (data) => {
       userCharacters[data.id] = data;
+    });
+
+    socket.on("pacDeath", (id) => {
+      restart();
     });
 
     const getCharacter = (character) => {
@@ -96,7 +97,7 @@
         var pacman = new PacMan(x, y, width, height, maze);
         pacman.dir = character.dir;
         pacman.name = "pacman";
-        pacman.id = socket.id;
+        pacman.socket = socket;
         pacman.ctx = pacman.maze.ctx;
         return pacman;
       } else if (character.name === "blinky") {
@@ -104,7 +105,7 @@
         ghost.dir = character.dir;
         ghost.color = "#fd0000";
         ghost.name = "blinky";
-        ghost.id = socket.id;
+        ghost.socket = socket;
         ghost.ctx = ghost.maze.ctx;
         return ghost;
       } else {
@@ -112,13 +113,13 @@
         ghost.dir = character.dir;
         ghost.color = "#ff08fa";
         ghost.name = "pinky";
-        ghost.id = socket.id;
+        ghost.socket = socket;
         ghost.ctx = ghost.maze.ctx;
         return ghost;
       }
     };
 
-    const getStartingCoordinates = (name) => {
+    const getStartingCharacter = (name) => {
       var x, y;
       if (name === "pacman") {
         x = 13 * maze.tileWidth + maze.tileWidth / 2;
@@ -130,7 +131,7 @@
         x = 14 * maze.tileWidth;
         y = 17 * maze.tileHeight;
       }
-      return { x, y };
+      return getCharacter({ x, y, name });
     };
 
     const selectCharacter = (character) => {
@@ -169,11 +170,29 @@
       }
     });
 
+    const restart = () => {
+      myCharacter.state = "ONRESTART";
+      myCharacter.dir = -1;
+      myCharacter.nextDir = -1;
+      setTimeout(() => {
+        myCharacter = getStartingCharacter(myCharacter.name);
+      }, 1500);
+    };
+
     const start = setInterval(() => {
       if (myCharacter != undefined) {
         maze.show();
         myCharacter.move();
         myCharacter.draw();
+        if (myCharacter.name === "pacman") {
+          myCharacter.eat();
+        } else {
+          for (var i in userCharacters) {
+            if (userCharacters[i].name === "pacman") {
+              myCharacter.catch(userCharacters[i]);
+            }
+          }
+        }
         for (var i in userCharacters) {
           getCharacter(userCharacters[i]).draw();
         }

@@ -42,7 +42,7 @@ io.of("/game").on("connection", (socket) => {
         text: `${user.name}, welcome to the room ${user.room}`,
       });
 
-      socket.broadcast
+      socket
         .to(user.room)
         .emit("message", { user: "admin", text: `${user.name}, has joined!` });
 
@@ -79,12 +79,15 @@ io.of("/game").on("connection", (socket) => {
     socket.to(user.room).emit("position", data);
   });
 
-  socket.on("eat", (data) => {
-    maze.matrix[data.i][data.j].value = -1;
-    socket.broadcast.emit("eat", data);
+  socket.on("eat", ({ id, i, j }) => {
+    var user = getUser(id);
+    maze.matrix[i][j].value = -1;
+    socket.to(user.room).emit("eat", { id, i, j });
   });
 
-  socket.on("pacDeath", (data) => {
-    socket.broadcast.emit("catch", data);
+  socket.on("pacDeath", ({ id }) => {
+    var user = getUser(id);
+    io.of("/game").to(user.room).emit("pacDeath", id);
+    console.log("DEATH");
   });
 });
