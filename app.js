@@ -2,73 +2,89 @@ const express = require("express");
 const app = express();
 const serv = require("http").Server(app);
 
+const {
+  addUser,
+  removeUser,
+  getUser,
+  getUsersInRoom,
+  setUserCharacter,
+} = require("./users.js");
+
 const PORT = process.env.PORT || 2000;
 
 app.get("/", function (req, res) {
   res.sendFile(__dirname + "/client/index.html");
 });
+
+app.get("/game", function (req, res) {
+  res.sendFile(__dirname + "/client/game.html");
+});
+
 app.use("/client", express.static(__dirname + "/client"));
 
 serv.listen(PORT, () => console.log(`Server has started on port ${PORT}`));
 
 const Maze = require("./server/classes/Maze.js");
 var maze = new Maze();
-var socketsCharacterList = [];
 
 var io = require("socket.io")(serv);
-io.sockets.on("connection", newConnection);
+io.of("/game").on("connection", (socket) => {
+  socket.on("disconnect", () => removeUser(socket.id));
 
-function newConnection(socket) {
-  console.log("Socket connection: " + socket.id);
-  if (socketsCharacterList.length >= 3) {
-    socket.disconnect();
-    console.log("disconnected: " + socket.id);
-  }
-  socket.emit("startMaze", maze);
+  socket.on("join", ({ name, room }, callback) => {
+    if (getUsersInRoom(room).length < 3) {
+      var { error, user } = addUser({ id: socket.id, name, room });
 
-  socket.on("characterName", function (characterName) {
-    if (
-      characterName === "pacman" &&
-      !socketsCharacterList.includes(socket.id) &&
-      socketsCharacterList[0] == undefined
-    ) {
-      socketsCharacterList[0] = socket.id;
-      socket.emit("characterName", { characterName: characterName, key: 0 });
-    } else if (
-      characterName === "blinky" &&
-      !socketsCharacterList.includes(socket.id) &&
-      socketsCharacterList[1] == undefined
-    ) {
-      socketsCharacterList[1] = socket.id;
-      socket.emit("characterName", { characterName: characterName, key: 1 });
-    } else if (
-      characterName === "pinky" &&
-      !socketsCharacterList.includes(socket.id) &&
-      socketsCharacterList[2] == undefined
-    ) {
-      socketsCharacterList[2] = socket.id;
-      socket.emit("characterName", { characterName: characterName, key: 2 });
+      if (error) return callback(error);
+
+      socket.emit("message", {
+        user: "admin",
+        text: `${user.name}, welcome to the room ${user.room}`,
+      });
+
+      socket.broadcast
+        .to(user.room)
+        .emit("message", { user: "admin", text: `${user.name}, has joined!` });
+
+      socket.join(user.room);
+      console.log(`${user.name} has joined ${user.room}`);
     } else {
-      socket.emit("characterName", "ALREADY_SELECTED");
+      callback("Sorry but this room is full at the moment");
     }
-    var start =
-      socketsCharacterList[0] != undefined &&
-      socketsCharacterList[1] != undefined &&
-      socketsCharacterList[2] != undefined;
-    if (start) io.sockets.emit("start", start);
   });
 
-  socket.on("position", function (data) {
-    socket.broadcast.emit("position", data);
-    console.log(data);
+  socket.on("character", (character, callback) => {
+    var user = getUser(socket.id);
+    if (user.character === undefined) {
+      var users = getUsersInRoom(user.room);
+      var getUserCharacter = (character) =>
+        users.filter((user) => user.character === character);
+      if (getUserCharacter(character) == "") {
+        setUserCharacter({ id: socket.id, character });
+        var usersCharacters = () =>
+          users.filter((user) => user.character !== undefined);
+        if (usersCharacters().length === 3) {
+          callback();
+          io.of("/game").to(user.room).emit("start", maze);
+          console.log(`GAME STARTED in room: ${user.room}`);
+        } else callback();
+      } else {
+        callback("Character already taken");
+      }
+    } else callback("You already select one character");
   });
 
-  socket.on("eat", function (data) {
-    maze.matrix[data.i][data.j] = -1;
+  socket.on("position", (data) => {
+    var user = getUser(data.id);
+    socket.to(user.room).emit("position", data);
+  });
+
+  socket.on("eat", (data) => {
+    maze.matrix[data.i][data.j].value = -1;
     socket.broadcast.emit("eat", data);
   });
 
-  socket.on("pacDeath", function (data) {
-    console.log("DEATH");
+  socket.on("pacDeath", (data) => {
+    socket.broadcast.emit("catch", data);
   });
-}
+});

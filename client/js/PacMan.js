@@ -1,14 +1,11 @@
 class PacMan extends Character {
   constructor(x, y, width, height, maze, socket) {
     super(x, y, width, height, maze, socket);
-    this.name = "pacman";
     this.upperMouthRadian = 1.85; // upper mouth radian
     this.lowerMouthRadian = 0.2; // lower mouth radian
     this.openingClosingMouthSpeed = 0.022; // speed of mouth opening & closing
-    this.alive = true;
     this.score = 0;
     keyCode = null;
-    this.socket = socket;
   }
 
   draw() {

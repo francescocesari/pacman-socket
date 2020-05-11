@@ -13,6 +13,7 @@ class Character {
     this.speed = 1.875;
     this.prevState;
     this.socket = socket;
+    this.alive = true;
   }
 
   stop() {
@@ -36,6 +37,7 @@ class Character {
     if (tile !== undefined) {
       if (this.dir === this.nextDir) {
         this.stop();
+        console.log(tile);
       } else {
         if (this.prevState === "STOP") {
           this.stop();
@@ -73,16 +75,15 @@ class Character {
     } else if (this.x > 405) {
       this.x = 0;
     }
-    //this.draw();
   }
 
   update() {
     socket.emit("position", {
-      characterName: this.name,
+      name: this.name,
       x: this.x,
       y: this.y,
-      key: this.key,
       dir: this.dir,
+      id: this.socket.id,
     });
   }
 

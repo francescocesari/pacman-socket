@@ -1,7 +1,7 @@
 {
   "name": "pacman-socket",
   "version": "1.0.0",
-  "description": "Pacman socket game",
+  "description": "A pacman game socket",
   "main": "app.js",
   "dependencies": {
     "express": "^4.17.1",
@@ -14,6 +14,14 @@
     "start": "node app.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/francescocesari/pacman-socket.git"
+  },
   "author": "Francesco Cesari",
-  "license": "ISC"
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/francescocesari/pacman-socket/issues"
+  },
+  "homepage": "https://github.com/francescocesari/pacman-socket#readme"
 }

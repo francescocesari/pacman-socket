@@ -1,10 +1,10 @@
 class Maze {
-  constructor(data) {
-    this.matrix = data.matrix;
-    this.tileColumnNumber = data.tileColumnNumber;
-    this.tileRowNumber = data.tileRowNumber;
-    this.tileWidth = data.tileWidth;
-    this.tileHeight = data.tileHeight;
+  constructor(maze) {
+    this.matrix = maze.matrix;
+    this.tileColumnNumber = maze.tileColumnNumber;
+    this.tileRowNumber = maze.tileRowNumber;
+    this.tileWidth = maze.tileWidth;
+    this.tileHeight = maze.tileHeight;
     this.width = this.tileWidth * this.tileColumnNumber;
     this.height = this.tileHeight * this.tileRowNumber;
   }
@@ -20,7 +20,7 @@ class Maze {
   }
 
   showWalls() {
-    fill(3, 71, 224);
+    fill(color("#1919a6"));
     for (let i = 0; i < this.tileRowNumber; i++) {
       for (let j = 0; j < this.tileColumnNumber; j++) {
         var x = this.matrix[i][j].x;
@@ -103,7 +103,7 @@ class Maze {
   }
 
   showPellets() {
-    fill(255, 236, 13);
+    fill(color("#fff000"));
     noStroke();
     for (let i = 3; i < this.tileRowNumber - 2; i++) {
       for (let j = 0; j < this.tileColumnNumber; j++) {
