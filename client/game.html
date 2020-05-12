@@ -81,7 +81,7 @@
     });
 
     socket.on("position", (data) => {
-      userCharacters[data.id] = data;
+      userCharacters.push(data);
     });
 
     socket.on("pacDeath", (id) => {
