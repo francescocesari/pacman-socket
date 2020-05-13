@@ -4,12 +4,7 @@ class Ghost extends Character {
   }
 
   catch(pacMan) {
-    if (
-      pacMan.x >= this.x - 14 &&
-      pacMan.x <= this.x + 14 &&
-      pacMan.y >= this.y - 14 &&
-      pacMan.y <= this.y + 14
-    ) {
+    if (pacMan.x === this.x && pacMan.y === this.y) {
       this.socket.emit("pacDeath", { id: this.socket.id });
     }
   }
